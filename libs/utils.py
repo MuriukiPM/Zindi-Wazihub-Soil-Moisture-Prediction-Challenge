@@ -2,8 +2,15 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import logging
 
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin, RegressorMixin
+
+# Enable logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 class IndexSelector(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -106,3 +113,30 @@ class ResidualFeatures(BaseEstimator, TransformerMixin):
         df = df.fillna(method='bfill') #first row endsup with Nans due to shift.
         
         return df
+
+class FullModel(BaseEstimator, RegressorMixin):
+    def __init__(self, baseline, residual_model, steps):
+        """Combine a baseline and residual model to predict any number of steps in the future."""
+        
+        self.baseline = baseline
+        self.residual_model = residual_model
+        self.steps = steps
+        
+    def fit(self, X, y):
+        self.baseline.fit(X, y)
+        self.resd = y - self.baseline.predict(X)
+        # given current residuals, can we predict what will be the residuals n steps in the future?
+        # train using all current training residuals save for last bunch
+        # validating using residual values n steps in the future for each row, 
+        # removing NaNs at the end to match shape
+        self.residual_model.fit(self.resd.iloc[:-self.steps], self.resd.shift(-self.steps).dropna())
+                
+        return self
+    
+    def predict(self, X):
+        y_b = pd.Series(self.baseline.predict(X))
+        resd_pred = pd.Series(self.residual_model.predict(self.resd), index=self.resd.index)
+        resd_pred = resd_pred.shift(steps).dropna()[-steps:]
+        y_pred = y_b.values + resd_pred.values
+        
+        return y_pred
