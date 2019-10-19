@@ -136,7 +136,7 @@ class FullModel(BaseEstimator, RegressorMixin):
     def predict(self, X):
         y_b = pd.Series(self.baseline.predict(X))
         resd_pred = pd.Series(self.residual_model.predict(self.resd), index=self.resd.index)
-        resd_pred = resd_pred.shift(steps).dropna()[-steps:]
+        resd_pred = resd_pred.shift(self.steps).dropna()[-self.steps:]
         y_pred = y_b.values + resd_pred.values
         
         return y_pred
