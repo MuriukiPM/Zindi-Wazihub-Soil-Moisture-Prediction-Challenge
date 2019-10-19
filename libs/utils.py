@@ -69,3 +69,40 @@ class WeatherComponents(BaseEstimator, TransformerMixin):
         Xt = df[self.cols].fillna(method='ffill').copy() # copy() to prevent SettingWithCopyWarning
         
         return Xt
+
+class FourierComponents(BaseEstimator, TransformerMixin):
+    def __init__(self, freqs):
+        """Create features based on sin(2*pi*f*t) and cos(2*pi*f*t)."""
+        self.freqs = freqs
+    
+    def fit(self, X, y=None):
+        return self
+    
+    def transform(self, X):
+        X = X.astype(np.float64)
+        Xt = np.zeros((X.shape[0], 2*len(self.freqs)))
+        
+        for i, f in enumerate(self.freqs):
+
+            Xt[:, 2*i]= np.cos(2*np.pi*f*X).reshape(-1) #even cols
+            Xt[:, 2*i + 1] = np.sin(2*np.pi*f*X).reshape(-1) #odd cols
+    
+        return Xt
+
+class ResidualFeatures(BaseEstimator, TransformerMixin):
+    def __init__(self, window=100):
+        """Generate features based on window statistics of past noise/residuals."""
+        self.window = window
+        
+    def fit(self, X, y=None):
+        return self
+    
+    def transform(self, X):
+        df = pd.DataFrame()
+        df['residual'] = pd.Series(X, index=X.index)
+        df['prior'] = df['residual'].shift(1) #series with all prev residual value for each row
+        df['mean'] = df['residual'].rolling(window=self.window).mean() #mean of previous 100 residuals
+        df['diff'] = df['residual'].diff().rolling(window=self.window).mean() #differential of previous 100 residuals
+        df = df.fillna(method='bfill') #first row endsup with Nans due to shift.
+        
+        return df
