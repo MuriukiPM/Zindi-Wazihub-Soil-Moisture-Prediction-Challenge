@@ -1,3 +1,4 @@
 .ipynb_checkpoints/
 __pycache__/
 libs/__pycache__
+nohup.out

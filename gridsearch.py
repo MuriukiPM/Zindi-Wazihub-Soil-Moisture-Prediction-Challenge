@@ -2,7 +2,7 @@
 # To add a new markdown cell, type '#%% [markdown]'
 
 #%%
-#!/usr/bin/python3
+#!$HOME/.local/share/virtualenvs/sk-eLjZDZHf/bin/python3
 import pandas as pd
 import seaborn as sns
 import numpy as np
@@ -21,7 +21,6 @@ from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 import joblib
 
 def main():
-
     train_df = pd.read_csv("data/Train.csv", header=0)# ignore the first row of the CSV file.
     cxt_maize_df = pd.read_csv("data/Context_Data_Maize.csv", header=0)
     cxt_peanuts_df = pd.read_csv("data/Context_Data_Peanuts.csv", header=0)
@@ -79,7 +78,7 @@ def main():
     # construct and train pipeline
     time = utils.IndexSelector()
     weather = utils.WeatherComponents(cols)
-    union = FeatureUnion([('indices', time), ('weather' weather)])
+    union = FeatureUnion([('indices', time), ('weather', weather)])
     poly = PolynomialFeatures()
     scaler = StandardScaler()
     svr = SVR(gamma='auto')
@@ -98,7 +97,7 @@ def main():
                     }
     ts_cv = TimeSeriesSplit(5) # 5-fold forward chaining
     search = GridSearchCV(
-        pipe2, param_grid, cv=ts_cv, scoring = 'r2', verbose=1)
+        pipe2, param_grid, cv=ts_cv, scoring = 'neg_mean_squared_error', verbose=1)
     utils.logger("Performing grid search...")
     search.fit(df_train, y_train)
     utils.logger("Best score: %0.3f" % search.best_score_)
