@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import logging
+import datetime
 
 from sklearn.base import BaseEstimator, TransformerMixin, RegressorMixin
 
@@ -97,20 +98,23 @@ class FourierComponents(BaseEstimator, TransformerMixin):
         return Xt
 
 class ResidualFeatures(BaseEstimator, TransformerMixin):
-    def __init__(self, window=100):
-        """Generate features based on window statistics of past noise/residuals."""
+    def __init__(self,cols,residuals_col='residuals',window=100):
+        """Generate features based on window statistics of past noise/residuals as well as other externals."""
         self.window = window
+        self.cols = cols
+        self.residuals_col = residuals_col
         
     def fit(self, X, y=None):
         return self
     
     def transform(self, X):
         df = pd.DataFrame()
-        df['residual'] = pd.Series(X, index=X.index)
+        df['residual'] = X[self.residuals_col] #grab the current residuals from time series fourier prediction
         df['prior'] = df['residual'].shift(1) #series with all prev residual value for each row
         df['mean'] = df['residual'].rolling(window=self.window).mean() #mean of previous 100 residuals
         df['diff'] = df['residual'].diff().rolling(window=self.window).mean() #differential of previous 100 residuals
         df = df.fillna(method='bfill') #first row endsup with Nans due to shift.
+        df[self.cols] = X[self.cols].fillna(method='bfill') #add to dataframe all external feats
         
         return df
 
@@ -129,14 +133,23 @@ class FullModel(BaseEstimator, RegressorMixin):
         # train using all current training residuals save for last bunch
         # validating using residual values n steps in the future for each row, 
         # removing NaNs at the end to match shape
-        self.residual_model.fit(self.resd.iloc[:-self.steps], self.resd.shift(-self.steps).dropna())
+        resd_true = self.resd.shift(-self.steps).dropna()
+        X['residuals'] = self.resd
+        self.train_data = X
+        self.residual_model.fit(X.iloc[:-self.steps], resd_true)
+        self.index_list = []
+        #create index list for future time steps
+        for ix in range(self.steps): 
+            if ix == 0: self.index_list.append(X.index[-1] + datetime.timedelta(minutes=5))
+            else: self.index_list.append(self.index_list[ix-1] + datetime.timedelta(minutes=5))
                 
         return self
     
     def predict(self, X):
-        y_b = pd.Series(self.baseline.predict(X))
-        resd_pred = pd.Series(self.residual_model.predict(self.resd), index=self.resd.index)
+        y_b = pd.Series(self.baseline.predict(X),  index=X.index)
+        resd_pred = pd.Series(self.residual_model.predict(self.train_data))
         resd_pred = resd_pred.shift(self.steps).dropna()[-self.steps:]
-        y_pred = y_b.values + resd_pred.values
+        resd_pred = pd.Series(resd_pred.values, index=self.index_list)
+        y_pred = y_b + resd_pred
         
         return y_pred
