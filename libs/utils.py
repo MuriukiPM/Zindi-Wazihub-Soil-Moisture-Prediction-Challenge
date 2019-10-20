@@ -64,7 +64,7 @@ def plot_results(df,target, y_pred, residuals):
 
 class WeatherComponents(BaseEstimator, TransformerMixin):
     def __init__(self, cols):
-        """Create features based on sin(2*pi*f*t) and cos(2*pi*f*t)."""
+        """Create features based on weather."""
         self.cols = cols
     
     def fit(self, df, y=None):

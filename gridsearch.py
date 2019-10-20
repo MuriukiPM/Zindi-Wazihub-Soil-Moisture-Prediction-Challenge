@@ -1,8 +1,8 @@
+#!$HOME/.local/share/virtualenvs/sk-eLjZDZHf/bin/python3
 # To add a new cell, type '#%%'
 # To add a new markdown cell, type '#%% [markdown]'
 
 #%%
-#!$HOME/.local/share/virtualenvs/sk-eLjZDZHf/bin/python3
 import pandas as pd
 import seaborn as sns
 import numpy as np
@@ -98,13 +98,13 @@ def main():
     ts_cv = TimeSeriesSplit(5) # 5-fold forward chaining
     search = GridSearchCV(
         pipe2, param_grid, cv=ts_cv, scoring = 'neg_mean_squared_error', verbose=1)
-    utils.logger("Performing grid search...")
+    utils.logger.info("Performing grid search...")
     search.fit(df_train, y_train)
-    utils.logger("Best score: %0.3f" % search.best_score_)
-    utils.logger("Best parameters set:")
+    utils.logger.info("Best score: %0.3f" % search.best_score_)
+    utils.logger.info("Best parameters set:")
     best_parameters = search.best_estimator_.get_params()
     for param_name in sorted(param_grid.keys()):
-        utils.logger("\t%s: %r" % (param_name, best_parameters[param_name]))
+        utils.logger.info("\t%s: %r" % (param_name, best_parameters[param_name]))
 
     utils.logger.info("Saving model...")
     joblib.dump(search, 'GridSearch.pckl')
