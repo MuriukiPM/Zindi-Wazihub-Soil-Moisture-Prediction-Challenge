@@ -1,13 +1,5 @@
 # To add a new cell, type '#%%'
 # To add a new markdown cell, type '#%% [markdown]'
-#%% Change working directory from the workspace root to the ipynb file location. Turn this addition off with the DataScience.changeDirOnImportExport setting
-# ms-python.python added
-import os
-try:
-	os.chdir(os.path.join(os.getcwd(), '../../../../../../tmp'))
-	print(os.getcwd())
-except:
-	pass
 
 #%%
 #!/usr/bin/python3
@@ -24,7 +16,7 @@ from shutil import rmtree
 from sklearn.svm import SVR
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 import joblib
 
@@ -87,9 +79,7 @@ def main():
     # construct and train pipeline
     time = utils.IndexSelector()
     weather = utils.WeatherComponents(cols)
-    union = FeatureUnion([
-                        ('indices', time), 
-                        ('weather' weather)])
+    union = FeatureUnion([('indices', time), ('weather' weather)])
     poly = PolynomialFeatures()
     scaler = StandardScaler()
     svr = SVR(gamma='auto')
