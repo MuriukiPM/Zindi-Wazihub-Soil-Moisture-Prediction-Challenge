@@ -1,12 +1,20 @@
-#!$HOME/.local/share/virtualenvs/sk-eLjZDZHf/bin/python3
 # To add a new cell, type '#%%'
 # To add a new markdown cell, type '#%% [markdown]'
 
 #%%
+#!$HOME/.local/share/virtualenvs/sk-eLjZDZHf/bin/python3
+
+
+#%%
+# import os
+# path = os.getcwd() + "/Zindi_Wazihub_Soil_Moisture_Prediction_Challenge/"
+# os.chdir(path)
+# os.getcwd()
+
+
+#%%
 import pandas as pd
-import seaborn as sns
 import numpy as np
-import matplotlib.pyplot as plt
 
 from libs import utils
 
@@ -20,6 +28,8 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 import joblib
 
+
+#%%
 def main():
     train_df = pd.read_csv("data/Train.csv", header=0)# ignore the first row of the CSV file.
     cxt_maize_df = pd.read_csv("data/Context_Data_Maize.csv", header=0)
