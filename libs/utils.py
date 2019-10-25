@@ -75,6 +75,7 @@ class ExternalComponents(BaseEstimator, TransformerMixin):
         if not isinstance(df, pd.DataFrame):
             df = pd.DataFrame(df)
         Xt = df[self.cols].fillna(method='ffill').copy() # copy() to prevent SettingWithCopyWarning
+        Xt = Xt[self.cols].fillna(method='bfill').copy() # copy() to prevent SettingWithCopyWarning
         
         return Xt
 
