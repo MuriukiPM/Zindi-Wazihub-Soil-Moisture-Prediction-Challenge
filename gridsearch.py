@@ -73,25 +73,17 @@ def getdata():
 
 
 #%%
-def createpipeline(memory,df):
-    cols = ['Air temperature (C)',
-       'Air humidity (%)', 'Pressure (KPa)', 'Wind speed (Km/h)',
-       'Wind gust (Km/h)', 'Wind direction (Deg)']
-
+def createpipeline(memory):
     # construct and train pipeline
     time = utils.IndexSelector()
-    weather = utils.ExternalComponents(cols)
-    union = FeatureUnion([('indices', time), ('weather', weather)])
     poly = PolynomialFeatures()
     scaler = StandardScaler()
     svr = SVR(gamma='auto')
-
-    pipe1 = Pipeline([('union', union)])
-    df = pipe1.transform(df)
-    pipe2 = Pipeline([('drift', poly),
-                    ('scaler', scaler),
-                    ('regressor', svr)],memory=memory)
-    return pipe2, df
+    pipe = Pipeline([('indices', time),
+                     ('drift', poly),
+                     ('scaler', scaler),
+                     ('regressor', svr)],memory=memory)
+    return pipe
 
 
 #%%
@@ -105,7 +97,7 @@ def main():
     #rmtree(cachedir)
     cachedir = mkdtemp() #creates a temporary directory
 
-    pipe, train_df_field2 = createpipeline(cachedir, train_df_field2)
+    pipe = createpipeline(cachedir)
     utils.logger.info(pipe)
 
     param_grid = {"drift__degree": range(2,4),
