@@ -63,7 +63,7 @@ def plot_results(df,target, y_pred, residuals):
     # plt.xlabel('year')
     plt.ylabel('residuals')
 
-class WeatherComponents(BaseEstimator, TransformerMixin):
+class ExternalComponents(BaseEstimator, TransformerMixin):
     def __init__(self, cols):
         """Create features based on weather."""
         self.cols = cols
@@ -114,39 +114,44 @@ class ResidualFeatures(BaseEstimator, TransformerMixin):
         df['mean'] = df['residual'].rolling(window=self.window).mean() #mean of previous 100 residuals
         df['diff'] = df['residual'].diff().rolling(window=self.window).mean() #differential of previous 100 residuals
         df = df.fillna(method='bfill') #first row endsup with Nans due to shift.
-        df[self.cols] = X[self.cols].fillna(method='bfill') #add to dataframe all external feats
+        #add to dataframe all external feats. if all: requires both forwardfill and backfill
+        df[self.cols] = X[self.cols].fillna(method='bfill') 
+        df[self.cols] = X[self.cols].fillna(method='ffill') 
         
         return df
 
 class FullModel(BaseEstimator, RegressorMixin):
-    def __init__(self, baseline, residual_model, steps):
+    def __init__(self, baseline, residual_model, steps,residuals_col='residuals'):
         """Combine a baseline and residual model to predict any number of steps in the future."""
         
         self.baseline = baseline
         self.residual_model = residual_model
         self.steps = steps
+        self.residuals_col = residuals_col
         
     def fit(self, X, y):
         self.baseline.fit(X, y)
         self.resd = y - self.baseline.predict(X)
         # given current residuals, can we predict what will be the residuals n steps in the future?
         # train using all current training residuals save for last bunch
-        # validating using residual values n steps in the future for each row, 
-        # removing NaNs at the end to match shape
+        # validating using residual values n steps in the future for each row, with NaNs at the end removed to match shape
         resd_true = self.resd.shift(-self.steps).dropna()
-        X['residuals'] = self.resd
-        self.train_data = X
-        self.residual_model.fit(X.iloc[:-self.steps], resd_true)
+        Xt = X.copy()
+        Xt[self.residuals_col] = self.resd #create a temporary residuals col
+        self.train_data = Xt #save for predicting
+        self.residual_model.fit(Xt.iloc[:-self.steps], resd_true)
         self.index_list = []
         #create index list for future time steps
         for ix in range(self.steps): 
-            if ix == 0: self.index_list.append(X.index[-1] + datetime.timedelta(minutes=5))
+            if ix == 0: self.index_list.append(Xt.index[-1] + datetime.timedelta(minutes=5))
             else: self.index_list.append(self.index_list[ix-1] + datetime.timedelta(minutes=5))
                 
         return self
     
     def predict(self, X):
+        # given a time series, use baseline to get predictions
         y_b = pd.Series(self.baseline.predict(X),  index=X.index)
+        # get residuals for the time series using the residual model, shifted appropriately to match step
         resd_pred = pd.Series(self.residual_model.predict(self.train_data))
         resd_pred = resd_pred.shift(self.steps).dropna()[-self.steps:]
         resd_pred = pd.Series(resd_pred.values, index=self.index_list)

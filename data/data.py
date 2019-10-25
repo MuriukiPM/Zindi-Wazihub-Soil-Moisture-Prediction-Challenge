@@ -20,10 +20,10 @@ import numpy as np
 #%%
 def datasets():
     # data
-    train_df = pd.read_csv("./Train.csv", header=0)# ignore the first row of the CSV file.
-    cxt_maize_df = pd.read_csv("./Context_Data_Maize.csv", header=0)
-    cxt_peanuts_df = pd.read_csv("./Context_Data_Peanuts.csv", header=0)
-    subm = pd.read_csv("./SampleSubmission.csv")
+    train_df = pd.read_csv("data/Train.csv", header=0)# ignore the first row of the CSV file.
+    cxt_maize_df = pd.read_csv("data/Context_Data_Maize.csv", header=0)
+    cxt_peanuts_df = pd.read_csv("data/Context_Data_Peanuts.csv", header=0)
+    subm = pd.read_csv("data/SampleSubmission.csv")
     train_df_raw = train_df.copy()
     subm_raw = subm.copy()
     cxt_maize_df_raw = cxt_maize_df.copy()
@@ -82,5 +82,5 @@ def datasets():
     train_df_field4 = train_df_field4.set_index('datetime', drop=True)
     train_df_field4 = train_df_field4.drop(to_drop, axis=1)
 
-    return train_df_raw, subm_raw, cxt_maize_df_raw, cxt_peanuts_df_raw, subm_field1, subm_field2, subm_field3, subm_field4, cxt train_df_field1, train_df_field2, train_df_field3, train_df_field4
+    return train_df_raw, subm_raw, cxt_maize_df_raw, cxt_peanuts_df_raw, subm_field1, subm_field2, subm_field3, subm_field4, train_df_field1, train_df_field2, train_df_field3, train_df_field4
 
