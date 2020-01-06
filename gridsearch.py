@@ -87,7 +87,7 @@ def createpipeline(memory):
 
 
 #%%
-def main():
+def gridsearch():
     # get the data
     _, train_df_field2, _, _, _, humidity_field2, _, _ = getdata()
     humidity_field2 = humidity_field2.values.reshape(-1)
@@ -124,5 +124,5 @@ def main():
 
 #%%
 if __name__ == '__main__':
-    main()
+    gridsearch()
 
